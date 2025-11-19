@@ -8,3 +8,27 @@ __pycache__
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# macOS
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+
+# CDK
+cdk.out/
+.cdk.staging/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# Test scripts (optional - you might want these)
+test-*.sh
