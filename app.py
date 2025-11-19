@@ -1,28 +1,58 @@
 #!/usr/bin/env python3
-import os
+"""
+Notifications Service - CDK Application Entry Point
 
+This app defines all stacks for the notifications service.
+"""
+
+import os
 import aws_cdk as cdk
 
+# Import from notification_service package (note: singular, matching your directory name)
 from notification_service.notification_service_stack import NotificationServiceStack
+from notification_service.eventbridge_stack import EventBridgeStack
 
-
+# Get environment from context or environment variable
 app = cdk.App()
-NotificationServiceStack(app, "NotificationServiceStack",
-    # If you don't specify 'env', this stack will be environment-agnostic.
-    # Account/Region-dependent features and context lookups will not work,
-    # but a single synthesized template can be deployed anywhere.
 
-    # Uncomment the next line to specialize this stack for the AWS Account
-    # and Region that are implied by the current CLI configuration.
+# Get configuration
+environment = app.node.try_get_context("environment") or os.getenv("ENVIRONMENT", "dev")
+aws_account = os.getenv("CDK_DEFAULT_ACCOUNT") or os.getenv("AWS_ACCOUNT_ID")
+aws_region = os.getenv("CDK_DEFAULT_REGION") or os.getenv("AWS_REGION", "us-east-1")
 
-    #env=cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
+# Define environment
+env = cdk.Environment(
+    account=aws_account,
+    region=aws_region
+)
 
-    # Uncomment the next line if you know exactly what Account and Region you
-    # want to deploy the stack to. */
+# Stack 1: Original Notification Service (SQS-based)
+notification_stack = NotificationServiceStack(
+    app,
+    f"NotificationService-{environment}",
+    env=env,
+    description=f"Notification service with SQS ({environment})",
+    tags={
+        "Project": "NotificationService",
+        "Environment": environment,
+        "ManagedBy": "CDK",
+        "Stack": "SQS"
+    }
+)
 
-    #env=cdk.Environment(account='123456789012', region='us-east-1'),
+# Stack 2: EventBridge Stack (enhanced event routing)
+eventbridge_stack = EventBridgeStack(
+    app,
+    f"NotificationServiceEventBridge-{environment}",
+    env=env,
+    description=f"EventBridge infrastructure for notifications service ({environment})",
+    tags={
+        "Project": "NotificationService",
+        "Environment": environment,
+        "ManagedBy": "CDK",
+        "Stack": "EventBridge"
+    }
+)
 
-    # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
-    )
-
+# Synthesize the CloudFormation templates
 app.synth()
