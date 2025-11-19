@@ -2,10 +2,10 @@
 Notifications Service CDK Package
 """
 
-from .notification_service_stack import NotificationServiceStack
+from .sqs_stack import SqsStack
 from .eventbridge_stack import EventBridgeStack
 
 __all__ = [
-    "NotificationServiceStack",
+    "SqsStack",
     "EventBridgeStack",
 ]

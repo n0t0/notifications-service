@@ -7,9 +7,7 @@ This app defines all stacks for the notifications service.
 
 import os
 import aws_cdk as cdk
-
-# Import from notification_service package (note: singular, matching your directory name)
-from notification_service.notification_service_stack import NotificationServiceStack
+from notification_service.sqs_stack import SqsStack
 from notification_service.eventbridge_stack import EventBridgeStack
 
 # Get environment from context or environment variable
@@ -26,12 +24,12 @@ env = cdk.Environment(
     region=aws_region
 )
 
-# Stack 1: Original Notification Service (SQS-based)
-notification_stack = NotificationServiceStack(
+# Stack 1: SQS Stack (queue-based processing)
+sqs_stack = SqsStack(
     app,
-    f"NotificationService-{environment}",
+    f"NotificationServiceSqs-{environment}",
     env=env,
-    description=f"Notification service with SQS ({environment})",
+    description=f"SQS queue for notification processing ({environment})",
     tags={
         "Project": "NotificationService",
         "Environment": environment,
@@ -40,7 +38,7 @@ notification_stack = NotificationServiceStack(
     }
 )
 
-# Stack 2: EventBridge Stack (enhanced event routing)
+# Stack 2: EventBridge Stack (event routing)
 eventbridge_stack = EventBridgeStack(
     app,
     f"NotificationServiceEventBridge-{environment}",

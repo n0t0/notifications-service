@@ -1,3 +1,12 @@
+"""
+SQS Stack for Notifications Service
+
+This stack creates:
+- SQS Queue for notification processing
+- EventBridge rule routing to SQS
+- Dead letter queue (optional)
+"""
+
 from aws_cdk import (
     Duration,
     Stack,
@@ -10,12 +19,16 @@ from aws_cdk import (
 from constructs import Construct
 
 
-class NotificationServiceStack(Stack):
+class SqsStack(Stack):
+    """
+    SQS Stack - Queue-based notification processing
+    """
+
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Create SQS Queue for notifications
-        notification_queue = sqs.Queue(
+        self.notification_queue = sqs.Queue(
             self,
             "NotificationQueue",
             queue_name="notification-service-queue",
@@ -38,7 +51,7 @@ class NotificationServiceStack(Stack):
         # Add SQS queue as target for the EventBridge rule
         event_rule.add_target(
             targets.SqsQueue(
-                queue=notification_queue,
+                queue=self.notification_queue,
                 message=events.RuleTargetInput.from_object({
                     "timestamp": events.EventField.from_path("$.time"),
                     "source": events.EventField.from_path("$.source"),
@@ -47,19 +60,21 @@ class NotificationServiceStack(Stack):
             )
         )
 
-        # Output the queue URL and ARN
+        # Outputs
         CfnOutput(
             self,
             "NotificationQueueUrl",
-            value=notification_queue.queue_url,
+            value=self.notification_queue.queue_url,
             description="URL of the SQS notification queue",
+            export_name=f"{construct_id}-QueueUrl"
         )
 
         CfnOutput(
             self,
             "NotificationQueueArn",
-            value=notification_queue.queue_arn,
+            value=self.notification_queue.queue_arn,
             description="ARN of the SQS notification queue",
+            export_name=f"{construct_id}-QueueArn"
         )
 
         CfnOutput(
