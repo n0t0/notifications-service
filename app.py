@@ -9,6 +9,7 @@ import os
 import aws_cdk as cdk
 from notification_service.sqs_stack import SqsStack
 from notification_service.eventbridge_stack import EventBridgeStack
+from notification_service.lambda_stack import LambdaStack
 
 # Get environment from context or environment variable
 app = cdk.App()
@@ -38,10 +39,29 @@ sqs_stack = SqsStack(
     }
 )
 
-# Stack 2: EventBridge Stack (event routing)
+# Stack 2: Lambda Stack (serverless compute)
+# Create Lambda functions first so EventBridge can reference them
+lambda_stack = LambdaStack(
+    app,
+    f"NotificationServiceLambda-{environment}",
+    event_bus=None,  # Will be set by EventBridge stack
+    notification_queue=sqs_stack.notification_queue,
+    env=env,
+    description=f"Lambda functions for notification processing ({environment})",
+    tags={
+        "Project": "NotificationService",
+        "Environment": environment,
+        "ManagedBy": "CDK",
+        "Stack": "Lambda"
+    }
+)
+
+# Stack 3: EventBridge Stack (event routing with Lambda targets)
 eventbridge_stack = EventBridgeStack(
     app,
     f"NotificationServiceEventBridge-{environment}",
+    event_processor=lambda_stack.event_processor,
+    slack_notifier=lambda_stack.slack_notifier,
     env=env,
     description=f"EventBridge infrastructure for notifications service ({environment})",
     tags={
@@ -51,6 +71,10 @@ eventbridge_stack = EventBridgeStack(
         "Stack": "EventBridge"
     }
 )
+
+# Add dependencies
+lambda_stack.add_dependency(sqs_stack)
+eventbridge_stack.add_dependency(lambda_stack)
 
 # Synthesize the CloudFormation templates
 app.synth()

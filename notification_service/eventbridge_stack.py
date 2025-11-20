@@ -15,12 +15,13 @@ from aws_cdk import (
     aws_events_targets as targets,
     aws_logs as logs,
     aws_sqs as sqs,
+    aws_lambda as lambda_,
     CfnOutput,
     RemovalPolicy,
     Duration,
-    Fn,
 )
 from constructs import Construct
+from typing import Optional
 
 
 class EventBridgeStack(Stack):
@@ -28,7 +29,14 @@ class EventBridgeStack(Stack):
     EventBridge Stack - Advanced event bus and routing
     """
 
-    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+    def __init__(
+        self,
+        scope: Construct,
+        construct_id: str,
+        event_processor: Optional[lambda_.IFunction] = None,
+        slack_notifier: Optional[lambda_.IFunction] = None,
+        **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Get environment from context (defaults to 'dev')
@@ -83,6 +91,12 @@ class EventBridgeStack(Stack):
         # Log custom events
         self.custom_events_rule.add_target(log_target)
 
+        # Add event processor Lambda as target if provided
+        if event_processor:
+            self.custom_events_rule.add_target(
+                targets.LambdaFunction(event_processor)
+            )
+
         # Rule 3: High-priority notifications
         high_priority_rule = events.Rule(
             self,
@@ -98,6 +112,12 @@ class EventBridgeStack(Stack):
             )
         )
         high_priority_rule.add_target(log_target)
+
+        # Add Slack notifier Lambda for high priority events
+        if slack_notifier:
+            high_priority_rule.add_target(
+                targets.LambdaFunction(slack_notifier)
+            )
 
         # Rule 4: S3 events (for file upload notifications)
         self.s3_events_rule = events.Rule(
@@ -130,6 +150,22 @@ class EventBridgeStack(Stack):
             enabled=False  # Disabled by default, enable when Lambda is ready
         )
 
+        # Add Slack notifier as target for scheduled events if provided
+        if slack_notifier:
+            self.scheduled_rule.add_target(
+                targets.LambdaFunction(
+                    slack_notifier,
+                    event=events.RuleTargetInput.from_object({
+                        "source": "custom.notifications",
+                        "detail-type": "Scheduled Reminder",
+                        "detail": {
+                            "message": "Daily standup reminder",
+                            "priority": "normal"
+                        }
+                    })
+                )
+            )
+
         # Rule 6: Error/failure events
         error_rule = events.Rule(
             self,
@@ -143,6 +179,12 @@ class EventBridgeStack(Stack):
             )
         )
         error_rule.add_target(log_target)
+
+        # Send errors directly to Slack
+        if slack_notifier:
+            error_rule.add_target(
+                targets.LambdaFunction(slack_notifier)
+            )
 
         # Archive for event replay (useful for debugging and recovery)
         event_archive = events.Archive(
