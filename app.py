@@ -7,9 +7,9 @@ This app defines all stacks for the notifications service.
 
 import os
 import aws_cdk as cdk
-from notification_service.sqs_stack import SqsStack
-from notification_service.eventbridge_stack import EventBridgeStack
-from notification_service.lambda_stack import LambdaStack
+from notifications_service.sqs_stack import SqsStack
+from notifications_service.eventbridge_stack import EventBridgeStack
+from notifications_service.lambda_stack import LambdaStack
 
 # Get environment from context or environment variable
 app = cdk.App()
@@ -28,7 +28,7 @@ env = cdk.Environment(
 # Stack 1: SQS Stack (queue-based processing)
 sqs_stack = SqsStack(
     app,
-    f"NotificationServiceSqs-{environment}",
+    f"NotificationsServiceSqs-{environment}",
     env=env,
     description=f"SQS queue for notification processing ({environment})",
     tags={
@@ -43,7 +43,7 @@ sqs_stack = SqsStack(
 # Create Lambda functions first so EventBridge can reference them
 lambda_stack = LambdaStack(
     app,
-    f"NotificationServiceLambda-{environment}",
+    f"NotificationsServiceLambda-{environment}",
     event_bus=None,  # Will be set by EventBridge stack
     notification_queue=sqs_stack.notification_queue,
     env=env,
@@ -59,7 +59,7 @@ lambda_stack = LambdaStack(
 # Stack 3: EventBridge Stack (event routing with Lambda targets)
 eventbridge_stack = EventBridgeStack(
     app,
-    f"NotificationServiceEventBridge-{environment}",
+    f"NotificationsServiceEventBridge-{environment}",
     event_processor=lambda_stack.event_processor,
     slack_notifier=lambda_stack.slack_notifier,
     env=env,

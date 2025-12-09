@@ -31,7 +31,7 @@ class SqsStack(Stack):
         self.notification_queue = sqs.Queue(
             self,
             "NotificationQueue",
-            queue_name="notification-service-queue",
+            queue_name="notifications-service-queue",
             visibility_timeout=Duration.seconds(300),
             retention_period=Duration.days(14),
             removal_policy=RemovalPolicy.DESTROY,  # Change to RETAIN for production
