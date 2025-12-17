@@ -1,2 +1,0 @@
-# SQS Consumer Lambda Dependencies
-# boto3 and botocore are provided by Lambda runtime

@@ -1,3 +1,45 @@
+#!/bin/bash
+# Cleanup script for removing CDK infrastructure files
+
+echo "Cleaning up CDK files from notifications-service repo..."
+
+# Remove CDK-specific files
+rm -f app.py
+rm -f cdk.json
+rm -f cdk.context.json
+rm -f deploy.sh
+rm -f source.bat
+rm -rf cdk.out
+
+# Remove old Lambda handlers (now in primersky-infra/lambda_functions/)
+rm -rf lambda_functions/
+
+# Remove old CDK stack files (now in primersky-infra/services/notifications_service.py)
+rm -rf notifications_service/*.py
+rm -rf notifications_service/__pycache__
+# Keep the notifications_service directory for future application logic
+mkdir -p notifications_service/channels
+mkdir -p notifications_service/core
+mkdir -p notifications_service/utils
+touch notifications_service/__init__.py
+touch notifications_service/channels/__init__.py
+touch notifications_service/core/__init__.py
+touch notifications_service/utils/__init__.py
+
+echo "✅ Removed CDK files, Lambda handlers, and old stack files"
+
+# Update requirements.txt to remove CDK dependencies
+cat > requirements.txt << 'REQS'
+boto3>=1.26.0
+aws-lambda-powertools>=2.0.0
+slack-sdk>=3.19.0
+requests>=2.31.0
+REQS
+
+echo "✅ Updated requirements.txt (removed CDK dependencies)"
+
+# Update README
+cat > README.md << 'README'
 # Notifications Service
 
 Multi-channel notification service supporting Slack, Email, SMS, Teams, and App notifications.
@@ -102,3 +144,15 @@ The Notifications API is deployed via API Gateway:
 - Auth: API key required (stored in AWS Secrets Manager)
 
 See API documentation in `docs/API.md`
+README
+
+echo "✅ Updated README.md"
+
+echo ""
+echo "Cleanup complete! CDK-related files removed."
+echo "This repo now contains only notification logic."
+echo ""
+echo "Next steps:"
+echo "1. Review changes: git status"
+echo "2. Commit: git add -A && git commit -m 'Remove CDK code - infrastructure moved to primersky-infra'"
+echo "3. Push: git push"
