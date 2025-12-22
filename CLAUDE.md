@@ -337,3 +337,60 @@ This ensures proper deployment order and resource availability.
 - Check CDK bootstrap in the target account/region
 - Verify stack dependencies are correct
 - Look for circular dependencies between stacks
+
+## AWS Services Comparison
+
+| Feature | Lambda | EventBridge | Step Functions |
+|---------|--------|-------------|----------------|
+| **Purpose** | Run code | Route events | Orchestrate workflows |
+| **Execution** | Single function | Fan-out to multiple targets | Sequential/parallel steps |
+| **State** | Stateless | Stateless | Stateful (tracks workflow progress) |
+| **Duration** | Max 15 minutes | Instant routing | Up to 1 year |
+| **Retry Logic** | Manual | Built-in per target | Built-in with error handling |
+| **Pricing** | Per invocation + duration | Per event published | Per state transition |
+| **Best For** | Single-purpose tasks | Event routing/fan-out | Multi-step workflows |
+
+### When to Use Each
+
+**Lambda** - Single-purpose functions:
+- Process a single notification
+- Transform data
+- Call external API
+- Handle webhook
+
+**EventBridge** - Event routing and orchestration:
+- Route notifications to multiple channels
+- Filter events by pattern
+- Schedule recurring tasks
+- Connect AWS services
+
+**Step Functions** - Complex workflows:
+- Multi-step processes with branching
+- Long-running workflows (hours/days)
+- Human approval gates
+- Retry/error handling with rollback
+- Audit trail requirements
+
+## Future Service Idea: Workflow Automation Service
+
+A Step Functions-based service for complex business processes:
+
+### Example Workflows
+
+1. **User Onboarding Flow**
+   - Create account → Verify email → Send welcome notification → Schedule follow-up
+
+2. **Order Processing**
+   - Validate order → Check inventory → Process payment → Notify warehouse → Send confirmation
+
+3. **Approval Workflows**
+   - Submit request → Manager approval → Finance approval → Execute → Notify all parties
+
+4. **Scheduled Reports**
+   - Gather data → Generate report → Store in S3 → Send via email → Archive
+
+### Integration Points
+
+- Triggers: API Gateway, EventBridge, S3, Scheduled
+- Actions: Lambda, DynamoDB, SES, SNS, External APIs
+- Notifications: Connect to notifications-service for multi-channel delivery
